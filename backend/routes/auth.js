@@ -9,16 +9,9 @@ const User = require('../models/user');
 const config = require('../config');
 
 const router = express.Router();
-
-/**
- * POST /api/auth/register
- * Register a new user
- */
 router.post('/register', async (req, res) => {
   try {
     const { email, password, name } = req.body;
-
-    // Validate input
     if (!email || !password || !name) {
       return res.status(400).json({
         success: false,
@@ -35,7 +28,7 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Validate password length
+    
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
