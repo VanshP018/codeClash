@@ -25,29 +25,29 @@ Frontend
 
 React.js
 
-Tailwind CSS / Bootstrap
+Tailwind CSS 
 
-Socket.IO (for real-time updates)
+Socket.IO 
 
 Backend
 
 Node.js + Express
 
-Socket.IO (WebSocket communication)
+Socket.IO
 
-MongoDB / PostgreSQL (for user data, match history, and problems)
+MongoDB 
 
 Code Execution
 
-Docker-based sandbox / Judge0 API (for safe code execution)
+
 
 Hosting
 
-Frontend: Vercel / Netlify
+Frontend: Vercel 
 
-Backend: Render / Railway / AWS
+Backend: Render 
 
-Database: MongoDB Atlas / Supabase
+Database: MongoDB Atlas 
 
 ⚙️ Installation & Setup
 # Clone the repository
