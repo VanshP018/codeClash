@@ -33,6 +33,14 @@ const roomService = {
         Authorization: `Bearer ${token}`
       }
     });
+  },
+
+  leaveRoom: (code, token) => {
+    return axios.post(`${API_URL}/leave/${code}`, {}, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
   }
 };
 

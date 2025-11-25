@@ -25,6 +25,7 @@ mongoose.connect(process.env.DATABASE_URL, {
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/rooms', require('./routes/room'));
+app.use('/api/leaderboard', require('./routes/leaderboard'));
 
 // Test route
 app.get('/api/test', (req, res) => {

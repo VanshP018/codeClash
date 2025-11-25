@@ -45,7 +45,10 @@ router.post('/signup', async (req, res) => {
       user: {
         id: user._id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        rating: user.rating,
+        battlesFought: user.battlesFought,
+        tier: user.tier
       }
     });
   } catch (error) {
@@ -88,7 +91,10 @@ router.post('/login', async (req, res) => {
       user: {
         id: user._id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        rating: user.rating,
+        battlesFought: user.battlesFought,
+        tier: user.tier
       }
     });
   } catch (error) {
@@ -108,7 +114,10 @@ router.get('/me', protect, async (req, res) => {
       user: {
         id: user._id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        rating: user.rating,
+        battlesFought: user.battlesFought,
+        tier: user.tier
       }
     });
   } catch (error) {

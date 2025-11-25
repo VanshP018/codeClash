@@ -21,6 +21,18 @@ const userSchema = new mongoose.Schema({
     minlength: 6,
     select: false
   },
+  rating: {
+    type: Number,
+    default: 800
+  },
+  battlesFought: {
+    type: Number,
+    default: 0
+  },
+  tier: {
+    type: String,
+    default: 'Beginner'
+  },
   createdAt: {
     type: Date,
     default: Date.now

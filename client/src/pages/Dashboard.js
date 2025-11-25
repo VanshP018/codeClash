@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Sidebar from '../components/Sidebar';
 import './Dashboard.css';
 
 const Dashboard = ({ user, onLogout }) => {
+  const navigate = useNavigate();
   const [showCreateRoom, setShowCreateRoom] = useState(false);
   const [showJoinRoom, setShowJoinRoom] = useState(false);
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-page">
+      <Sidebar user={user} onLogout={onLogout} />
+      
+      <div className="dashboard-container">
       <div className="dashboard-header">
         <h1>Welcome, {user.username}!</h1>
-        <button onClick={onLogout} className="logout-btn">Logout</button>
       </div>
       <div className="dashboard-content">
         <div className="user-card">
@@ -46,6 +51,7 @@ const Dashboard = ({ user, onLogout }) => {
           <CreateRoomModal 
             user={user}
             onClose={() => setShowCreateRoom(false)}
+            navigate={navigate}
           />
         )}
 
@@ -53,14 +59,16 @@ const Dashboard = ({ user, onLogout }) => {
           <JoinRoomModal 
             user={user}
             onClose={() => setShowJoinRoom(false)}
+            navigate={navigate}
           />
         )}
+      </div>
       </div>
     </div>
   );
 };
 
-const CreateRoomModal = ({ user, onClose }) => {
+const CreateRoomModal = ({ user, onClose, navigate }) => {
   const [roomCode, setRoomCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -82,7 +90,8 @@ const CreateRoomModal = ({ user, onClose }) => {
       const data = await response.json();
 
       if (data.success) {
-        setRoomCode(data.room.code);
+        // Navigate to room page immediately
+        navigate(`/room/${data.room.code}`);
       } else {
         setError(data.message || 'Failed to create room');
       }
@@ -108,48 +117,25 @@ const CreateRoomModal = ({ user, onClose }) => {
 
         {error && <div className="error-message">{error}</div>}
 
-        {!roomCode ? (
-          <div className="modal-body">
-            <p>Click the button below to create a new room with a unique 6-digit code:</p>
-            <button 
-              className="create-room-btn"
-              onClick={handleCreateRoom}
-              disabled={loading}
-            >
-              {loading ? 'Creating...' : 'Generate Room Code'}
-            </button>
-          </div>
-        ) : (
-          <div className="modal-body room-code-display">
-            <p>🎉 Room Created Successfully!</p>
-            <div className="code-box">
-              <div className="code-text">{roomCode}</div>
-            </div>
-            <p className="code-description">Share this code with others to let them join your room</p>
-            <button 
-              className="copy-btn"
-              onClick={copyToClipboard}
-            >
-              📋 Copy Code
-            </button>
-            <button 
-              className="done-btn"
-              onClick={onClose}
-            >
-              Done
-            </button>
-          </div>
-        )}
+        <div className="modal-body">
+          <p>Click the button below to create a new room:</p>
+          <button 
+            className="create-room-btn"
+            onClick={handleCreateRoom}
+            disabled={loading}
+          >
+            {loading ? 'Creating Room...' : 'Generate Room Code'}
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-const JoinRoomModal = ({ user, onClose }) => {
+const JoinRoomModal = ({ user, onClose, navigate }) => {
   const [roomCode, setRoomCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [joined, setJoined] = useState(false);
 
   const handleJoinRoom = async () => {
     if (!roomCode.trim()) {
@@ -174,7 +160,8 @@ const JoinRoomModal = ({ user, onClose }) => {
       const data = await response.json();
 
       if (data.success) {
-        setJoined(true);
+        // Navigate to room page
+        navigate(`/room/${roomCode}`);
       } else {
         setError(data.message || 'Failed to join room');
       }
@@ -195,36 +182,24 @@ const JoinRoomModal = ({ user, onClose }) => {
 
         {error && <div className="error-message">{error}</div>}
 
-        {!joined ? (
-          <div className="modal-body">
-            <p>Enter the 6-digit room code to join:</p>
-            <input
-              type="text"
-              maxLength="6"
-              placeholder="000000"
-              value={roomCode}
-              onChange={(e) => setRoomCode(e.target.value.replace(/\D/g, ''))}
-              className="room-code-input"
-            />
-            <button 
-              className="join-room-btn"
-              onClick={handleJoinRoom}
-              disabled={loading || roomCode.length !== 6}
-            >
-              {loading ? 'Joining...' : 'Join Room'}
-            </button>
-          </div>
-        ) : (
-          <div className="modal-body success">
-            <p>✅ Successfully joined the room!</p>
-            <button 
-              className="done-btn"
-              onClick={onClose}
-            >
-              Close
-            </button>
-          </div>
-        )}
+        <div className="modal-body">
+          <p>Enter the 6-digit room code to join:</p>
+          <input
+            type="text"
+            maxLength="6"
+            placeholder="000000"
+            value={roomCode}
+            onChange={(e) => setRoomCode(e.target.value.replace(/\D/g, ''))}
+            className="room-code-input"
+          />
+          <button 
+            className="join-room-btn"
+            onClick={handleJoinRoom}
+            disabled={loading || roomCode.length !== 6}
+          >
+            {loading ? 'Joining...' : 'Join Room'}
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,347 @@
+{
+  "questions": [
+    {
+      "id": 1,
+      "title": "Sum of Missing Numbers",
+      "difficulty": "Easy",
+      "tags": ["Arrays", "Math"],
+      "statement": "You are given an array containing distinct integers from 1 to n except for some missing values. Return the sum of all missing numbers.",
+      "input_format": {
+        "n": "Maximum value",
+        "nums": "List of existing numbers"
+      },
+      "output_format": "Integer sum of missing numbers",
+      "constraints": "1 <= n <= 10^5",
+      "sample_testcase": {
+        "input": { "n": 7, "nums": [1, 2, 4, 6] },
+        "output": 13
+      },
+      "explanation": "Missing numbers are 3, 5, 7 → sum = 15.",
+      "validator": "Check sum of all integers 1..n minus sum(nums)"
+    },
+    {
+      "id": 2,
+      "title": "Count Balanced Substrings",
+      "difficulty": "Easy",
+      "tags": ["Strings"],
+      "statement": "You are given a binary string. A substring is balanced if number of 0s equals number of 1s. Return how many such substrings exist.",
+      "input_format": { "s": "Binary string" },
+      "output_format": "Integer count",
+      "constraints": "1 <= len(s) <= 10^5",
+      "sample_testcase": {
+        "input": "0101",
+        "output": 4
+      },
+      "explanation": "Balanced substrings: 01, 10, 0101, 01.",
+      "validator": "Check count of substrings where zeros == ones"
+    },
+    {
+      "id": 3,
+      "title": "Smallest Unique Element",
+      "difficulty": "Easy",
+      "tags": ["Arrays"],
+      "statement": "Return the smallest element in the array that appears exactly once. If no such element exists, return -1.",
+      "input_format": { "nums": "List[int]" },
+      "output_format": "Integer",
+      "constraints": "1 <= nums.length <= 10^5",
+      "sample_testcase": {
+        "input": [4, 3, 2, 3, 4, 6],
+        "output": 2
+      },
+      "explanation": "Unique elements: 2, 6 → smallest = 2.",
+      "validator": "Count frequencies and return smallest with freq=1"
+    },
+    {
+      "id": 4,
+      "title": "Max Consecutive Increasing",
+      "difficulty": "Easy",
+      "tags": ["Arrays"],
+      "statement": "Given an array, return the length of the longest strictly increasing consecutive subarray.",
+      "input_format": { "nums": "List[int]" },
+      "output_format": "Integer length",
+      "constraints": "1 <= n <= 10^5",
+      "sample_testcase": {
+        "input": [1, 2, 3, 2, 3, 4, 5],
+        "output": 4
+      },
+      "explanation": "Longest increasing run is 2,3,4,5.",
+      "validator": "Scan array, track streak"
+    },
+    {
+      "id": 5,
+      "title": "Is Perfect Square Using Binary Search",
+      "difficulty": "Easy",
+      "tags": ["Math"],
+      "statement": "Check if a given integer is a perfect square using binary search.",
+      "input_format": { "n": "Integer" },
+      "output_format": "true/false",
+      "constraints": "1 <= n <= 10^12",
+      "sample_testcase": {
+        "input": 49,
+        "output": true
+      },
+      "explanation": "7*7=49.",
+      "validator": "Binary search from 1 to sqrt(n)"
+    },
+    {
+      "id": 6,
+      "title": "Two Sum Closest",
+      "difficulty": "Medium",
+      "tags": ["Arrays", "Two Pointers"],
+      "statement": "Return the pair of elements whose sum is closest to the target.",
+      "input_format": {
+        "nums": "List[int]",
+        "target": "Integer"
+      },
+      "output_format": "Pair [a, b]",
+      "constraints": "2 <= n <= 10^5",
+      "sample_testcase": {
+        "input": { "nums": [-1, 2, 4, 7], "target": 5 },
+        "output": [2, 4]
+      },
+      "explanation": "2+4=6 is closest to 5.",
+      "validator": "Sort + two-pointer sweep"
+    },
+    {
+      "id": 7,
+      "title": "Longest Alternating Parity Subarray",
+      "difficulty": "Medium",
+      "tags": ["Arrays"],
+      "statement": "Return the length of the longest subarray where elements alternate between even and odd.",
+      "input_format": { "nums": "List[int]" },
+      "output_format": "Integer",
+      "constraints": "1 <= n <= 10^5",
+      "sample_testcase": {
+        "input": [3, 2, 5, 8, 7],
+        "output": 5
+      },
+      "explanation": "Entire array alternates.",
+      "validator": "Check parity difference between consecutive elements"
+    },
+    {
+      "id": 8,
+      "title": "Count Islands With DFS",
+      "difficulty": "Medium",
+      "tags": ["Graph", "DFS"],
+      "statement": "Given a grid of 0s and 1s, count the number of connected islands.",
+      "input_format": { "grid": "2D list of 0/1" },
+      "output_format": "Integer",
+      "constraints": "1 <= rows, cols <= 1000",
+      "sample_testcase": {
+        "input": [[1,1,0],[0,1,0],[1,0,1]],
+        "output": 3
+      },
+      "explanation": "Three disconnected groups of 1s.",
+      "validator": "DFS marking visited"
+    },
+    {
+      "id": 9,
+      "title": "Minimum Jumps to Reach End",
+      "difficulty": "Medium",
+      "tags": ["DP", "Greedy"],
+      "statement": "Each element represents max jump length. Return minimum jumps to reach end.",
+      "input_format": { "nums": "List[int]" },
+      "output_format": "Integer",
+      "constraints": "1 <= nums.length <= 10^5",
+      "sample_testcase": {
+        "input": [2, 3, 1, 1, 4],
+        "output": 2
+      },
+      "explanation": "2 → 3 → End.",
+      "validator": "Greedy reach tracking"
+    },
+    {
+      "id": 10,
+      "title": "Tree Level Averages",
+      "difficulty": "Medium",
+      "tags": ["Trees", "BFS"],
+      "statement": "Return the average value of nodes on each level of a binary tree.",
+      "input_format": { "root": "Binary tree root" },
+      "output_format": "List of averages",
+      "constraints": "1 <= nodes <= 10^5",
+      "sample_testcase": {
+        "input": [3, 9, 20, null, null, 15, 7],
+        "output": [3, 14.5, 11]
+      },
+      "explanation": "Each level average.",
+      "validator": "Level-order BFS"
+    },
+    {
+      "id": 11,
+      "title": "Max Sum Increasing Subsequence",
+      "difficulty": "Hard",
+      "tags": ["DP"],
+      "statement": "Return the maximum sum of a strictly increasing subsequence.",
+      "input_format": { "nums": "List[int]" },
+      "output_format": "Integer",
+      "constraints": "1 <= n <= 2000",
+      "sample_testcase": {
+        "input": [1, 101, 2, 3, 100],
+        "output": 106
+      },
+      "explanation": "1 + 2 + 3 + 100 = 106.",
+      "validator": "DP[i] = max(dp[j] + nums[i])"
+    },
+    {
+      "id": 12,
+      "title": "Shortest Path in Weighted Graph",
+      "difficulty": "Hard",
+      "tags": ["Graph", "Dijkstra"],
+      "statement": "Find the shortest path cost from source to all vertices.",
+      "input_format": {
+        "n": "Number of nodes",
+        "edges": "List of [u, v, w]",
+        "source": "Source node"
+      },
+      "output_format": "List of distances",
+      "constraints": "1 <= n <= 10^5",
+      "sample_testcase": {
+        "input": {
+          "n": 5,
+          "edges": [[0,1,2],[1,2,3],[0,3,6]],
+          "source": 0
+        },
+        "output": [0, 2, 5, 6, -1]
+      },
+      "explanation": "Node 4 unreachable.",
+      "validator": "Run Dijkstra using min-heap"
+    },
+    {
+      "id": 13,
+      "title": "Longest Path in Binary Tree",
+      "difficulty": "Hard",
+      "tags": ["Trees", "DFS"],
+      "statement": "Return the length (edges count) of the longest path between any two nodes.",
+      "input_format": { "root": "Binary tree" },
+      "output_format": "Integer",
+      "constraints": "1 <= nodes <= 10^5",
+      "sample_testcase": {
+        "input": [1, 2, 3, 4, 5],
+        "output": 3
+      },
+      "explanation": "Longest path is 4→2→1→3.",
+      "validator": "Track max diameter during DFS"
+    },
+    {
+      "id": 14,
+      "title": "Count Subarrays With Product < K",
+      "difficulty": "Medium",
+      "tags": ["Arrays", "Two Pointers"],
+      "statement": "Count subarrays whose product of elements is less than k.",
+      "input_format": { "nums": "List[int]", "k": "Integer" },
+      "output_format": "Integer",
+      "constraints": "1 <= n <= 10^5",
+      "sample_testcase": {
+        "input": { "nums": [10, 5, 2, 6], "k": 100 },
+        "output": 8
+      },
+      "explanation": "Sliding window.",
+      "validator": "Shrink window until product < k"
+    },
+    {
+      "id": 15,
+      "title": "Split Array to Minimize Largest Sum",
+      "difficulty": "Hard",
+      "tags": ["DP", "Binary Search"],
+      "statement": "Split array into m subarrays such that the largest sum is minimized.",
+      "input_format": { "nums": "List[int]", "m": "Integer" },
+      "output_format": "Integer minimum largest sum",
+      "constraints": "1 <= n <= 10^5",
+      "sample_testcase": {
+        "input": { "nums": [7,2,5,10,8], "m": 2 },
+        "output": 18
+      },
+      "explanation": "Split as [7,2,5] and [10,8].",
+      "validator": "Binary search over answer + greedy check"
+    },
+    {
+      "id": 16,
+      "title": "Graph Bipartite Check",
+      "difficulty": "Medium",
+      "tags": ["Graph", "BFS"],
+      "statement": "Determine if an undirected graph is bipartite.",
+      "input_format": { "adj": "Adjacency list" },
+      "output_format": "true/false",
+      "constraints": "1 <= n <= 10^5",
+      "sample_testcase": {
+        "input": [[1,3],[0,2],[1,3],[0,2]],
+        "output": true
+      },
+      "explanation": "2-coloring possible.",
+      "validator": "Color graph using BFS"
+    },
+    {
+      "id": 17,
+      "title": "Min Cost to Climb Stairs",
+      "difficulty": "Easy",
+      "tags": ["DP"],
+      "statement": "You can climb 1 or 2 steps. Return minimum cost to reach top.",
+      "input_format": { "cost": "List[int]" },
+      "output_format": "Integer",
+      "constraints": "1 <= n <= 10^5",
+      "sample_testcase": {
+        "input": [10, 15, 20],
+        "output": 15
+      },
+      "explanation": "Take step 1 then jump to top.",
+      "validator": "dp[i] = cost[i] + min(dp[i-1], dp[i-2])"
+    },
+    {
+      "id": 18,
+      "title": "Reorder Tree to Match Preorder",
+      "difficulty": "Hard",
+      "tags": ["Trees", "Backtracking"],
+      "statement": "Given a binary tree and a target preorder, determine if the tree can be reordered (swap children) to match the preorder.",
+      "input_format": { "root": "Tree", "preorder": "List[int]" },
+      "output_format": "true/false",
+      "constraints": "1 <= nodes <= 2000",
+      "sample_testcase": {
+        "input": {
+          "root": [1,2,3],
+          "preorder": [1,3,2]
+        },
+        "output": true
+      },
+      "explanation": "Swap left and right.",
+      "validator": "DFS with swap check"
+    },
+    {
+      "id": 19,
+      "title": "Max Frequency After Increment Operations",
+      "difficulty": "Medium",
+      "tags": ["Arrays", "Sliding Window"],
+      "statement": "You can increment an element by 1 in one operation. Find max frequency of any element after at most k operations.",
+      "input_format": { "nums": "List[int]", "k": "Integer" },
+      "output_format": "Integer",
+      "constraints": "1 <= n <= 10^5",
+      "sample_testcase": {
+        "input": { "nums": [1,2,4], "k": 5 },
+        "output": 3
+      },
+      "explanation": "Make all numbers = 4.",
+      "validator": "Sort + sliding window"
+    },
+    {
+      "id": 20,
+      "title": "Longest Path in DAG",
+      "difficulty": "Hard",
+      "tags": ["Graph", "DP"],
+      "statement": "Given a directed acyclic graph, return the length of the longest path.",
+      "input_format": {
+        "n": "Nodes",
+        "edges": "List of [u, v]"
+      },
+      "output_format": "Integer",
+      "constraints": "1 <= n <= 10^5",
+      "sample_testcase": {
+        "input": {
+          "n": 5,
+          "edges": [[0,1],[1,2],[0,3],[3,4]]
+        },
+        "output": 3
+      },
+      "explanation": "Longest path: 0→3→4 or 0→1→2.",
+      "validator": "Topo sort + DP on DAG"
+    }
+  ]
+}

@@ -60,9 +60,21 @@ router.post('/join', protect, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Room not found' });
     }
 
-    // Check if user already in room
-    if (room.participants.includes(req.userId)) {
-      return res.status(400).json({ success: false, message: 'You are already in this room' });
+    // Check if user already in room - if yes, just return success (allow rejoin)
+    const isAlreadyParticipant = room.participants.some(
+      participantId => participantId.toString() === req.userId.toString()
+    );
+    
+    if (isAlreadyParticipant) {
+      return res.status(200).json({
+        success: true,
+        message: 'You are already in this room',
+        room: {
+          id: room._id,
+          code: room.code,
+          participants: room.participants
+        }
+      });
     }
 
     // Add user to room
@@ -77,6 +89,54 @@ router.post('/join', protect, async (req, res) => {
         code: room.code,
         participants: room.participants
       }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// @route POST /api/rooms/leave/:code
+// @desc Leave a room
+// @access Private
+router.post('/leave/:code', protect, async (req, res) => {
+  try {
+    const { code } = req.params;
+
+    // Find room
+    const room = await Room.findOne({ code });
+
+    if (!room) {
+      return res.status(404).json({ success: false, message: 'Room not found' });
+    }
+
+    // Check if user is in the room
+    const isParticipant = room.participants.some(
+      participantId => participantId.toString() === req.userId.toString()
+    );
+    
+    if (!isParticipant) {
+      return res.status(400).json({ success: false, message: 'You are not in this room' });
+    }
+
+    // Check if user is the host
+    const isHost = room.createdBy.toString() === req.userId.toString();
+
+    // Remove user from participants
+    room.participants = room.participants.filter(
+      participantId => participantId.toString() !== req.userId.toString()
+    );
+
+    // If host is leaving and there are still participants, assign new host
+    if (isHost && room.participants.length > 0) {
+      room.createdBy = room.participants[0]; // First participant becomes new host
+    }
+
+    await room.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Left room successfully',
+      newHost: isHost && room.participants.length > 0 ? room.participants[0] : null
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

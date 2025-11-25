@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import SignUp from './components/SignUp';
 import Login from './components/Login';
 import Dashboard from './pages/Dashboard';
+import Room from './pages/Room';
+import Leaderboard from './pages/Leaderboard';
 import './App.css';
 
 function App() {
@@ -59,28 +62,67 @@ function App() {
     return <div className="loading">Loading...</div>;
   }
 
-  if (currentUser) {
-    return <Dashboard user={currentUser} onLogout={handleLogout} />;
-  }
-
   return (
-    <div>
-      {isSignUp ? (
-        <div className="auth-container">
-          <SignUp onSignUp={handleSignUp} />
-          <div className="toggle-link">
-            <p>Already have an account? <button type="button" onClick={toggleAuthMode}>Login</button></p>
-          </div>
-        </div>
-      ) : (
-        <div className="auth-container">
-          <Login onLogin={handleLogin} />
-          <div className="toggle-link">
-            <p>Don't have an account? <button type="button" onClick={toggleAuthMode}>Sign Up</button></p>
-          </div>
-        </div>
-      )}
-    </div>
+    <Router>
+      <Routes>
+        <Route 
+          path="/" 
+          element={
+            currentUser ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <div>
+                {isSignUp ? (
+                  <div className="auth-container">
+                    <SignUp onSignUp={handleSignUp} />
+                    <div className="toggle-link">
+                      <p>Already have an account? <button type="button" onClick={toggleAuthMode}>Login</button></p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="auth-container">
+                    <Login onLogin={handleLogin} />
+                    <div className="toggle-link">
+                      <p>Don't have an account? <button type="button" onClick={toggleAuthMode}>Sign Up</button></p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          } 
+        />
+        <Route 
+          path="/dashboard" 
+          element={
+            currentUser ? (
+              <Dashboard user={currentUser} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/room/:code" 
+          element={
+            currentUser ? (
+              <Room user={currentUser} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/leaderboard" 
+          element={
+            currentUser ? (
+              <Leaderboard user={currentUser} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          } 
+        />
+      </Routes>
+    </Router>
   );
 }
 
