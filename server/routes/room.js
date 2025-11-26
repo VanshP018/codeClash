@@ -2,7 +2,57 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 const Room = require('../models/Room');
+const User = require('../models/User');
 const { generateRoomCode } = require('../utils/roomUtils');
+
+// Helper function to update ratings for ashes mode
+async function updateAshesRatings(room) {
+  if (room.mode !== 'ashes') return;
+  
+  try {
+    const scores = Object.fromEntries(room.scores || new Map());
+    const participants = room.participants;
+    
+    if (participants.length !== 2) return;
+    
+    const [userId1, userId2] = participants;
+    const score1 = scores[userId1] || 0;
+    const score2 = scores[userId2] || 0;
+    
+    // Calculate rating change: (winner_score - loser_score) * 5
+    const scoreDiff = Math.abs(score1 - score2);
+    const ratingChange = scoreDiff * 5;
+    
+    const user1 = await User.findById(userId1);
+    const user2 = await User.findById(userId2);
+    
+    if (!user1 || !user2) return;
+    
+    // Update ratings based on who won
+    if (score1 > score2) {
+      // User 1 wins
+      user1.rating = (user1.rating || 800) + ratingChange;
+      user2.rating = Math.max(0, (user2.rating || 800) - ratingChange); // Don't go below 0
+      console.log(`[Ashes Rating] ${user1.username} wins! +${ratingChange} rating. ${user2.username} -${ratingChange} rating`);
+    } else if (score2 > score1) {
+      // User 2 wins
+      user2.rating = (user2.rating || 800) + ratingChange;
+      user1.rating = Math.max(0, (user1.rating || 800) - ratingChange);
+      console.log(`[Ashes Rating] ${user2.username} wins! +${ratingChange} rating. ${user1.username} -${ratingChange} rating`);
+    } else {
+      // Draw - no rating change
+      console.log(`[Ashes Rating] Draw - no rating changes`);
+      return;
+    }
+    
+    await user1.save();
+    await user2.save();
+    
+    console.log(`[Ashes Rating] Updated ratings: ${user1.username}=${user1.rating}, ${user2.username}=${user2.rating}`);
+  } catch (err) {
+    console.error('[Ashes Rating] Error updating ratings:', err);
+  }
+}
 
 // @route POST /api/rooms/create
 // @desc Create a new room
@@ -153,6 +203,38 @@ router.post('/leave/:code', protect, async (req, res) => {
         room.sessionEnded = true;
         sessionEndedDueToLeave = true;
         winner = room.participants[0];
+        
+        // For ashes mode, update ratings (leaver loses, remaining player wins)
+        if (room.mode === 'ashes') {
+          try {
+            const winnerId = winner._id.toString();
+            const loserId = req.userId.toString();
+            
+            const winnerUser = await User.findById(winnerId);
+            const loserUser = await User.findById(loserId);
+            
+            if (winnerUser && loserUser) {
+              const scores = Object.fromEntries(room.scores || new Map());
+              const winnerScore = scores[winnerId] || 0;
+              const loserScore = scores[loserId] || 0;
+              
+              // Calculate rating change based on score difference
+              const scoreDiff = Math.abs(winnerScore - loserScore);
+              const ratingChange = Math.max(scoreDiff * 5, 25); // Minimum 25 for leaving penalty
+              
+              winnerUser.rating = (winnerUser.rating || 800) + ratingChange;
+              loserUser.rating = Math.max(0, (loserUser.rating || 800) - ratingChange);
+              
+              await winnerUser.save();
+              await loserUser.save();
+              
+              console.log(`[Leave] Ashes ratings updated: ${winnerUser.username} +${ratingChange}, ${loserUser.username} -${ratingChange}`);
+            }
+          } catch (err) {
+            console.error('[Leave] Error updating ashes ratings:', err);
+          }
+        }
+        
         console.log(`[Leave] Session ended - ${winner.username} wins by default`);
       }
     }
@@ -352,6 +434,9 @@ router.post('/submit/:code', protect, async (req, res) => {
         if (!room.sessionEnded) {
           room.sessionEnded = true;
           await room.save();
+          
+          // Update ratings for ashes mode
+          await updateAshesRatings(room);
         }
         return res.status(200).json({
           success: false,
@@ -404,6 +489,10 @@ router.post('/submit/:code', protect, async (req, res) => {
       if (room.questionsCompleted >= 3) {
         room.sessionEnded = true;
         await room.save();
+        
+        // Update ratings for ashes mode
+        await updateAshesRatings(room);
+        
         console.log(`[Submit] Session ended after 3 questions`);
 
         return res.status(200).json({

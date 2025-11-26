@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { generateBoilerplate } from '../utils/boilerplateGenerator';
+import { generateBoilerplate, generateTestCode } from '../utils/boilerplateGenerator';
+import { getLanguageConfig, getAvailableLanguages } from '../utils/languageConfig';
 import CodeEditor from '../components/CodeEditor';
 import SubmitModal from '../components/SubmitModal';
 import FinalScoreboard from '../components/FinalScoreboard';
@@ -12,7 +13,7 @@ const Battle = ({ user, refreshUser }) => {
   const { code } = useParams();
   const navigate = useNavigate();
   const [question, setQuestion] = useState(null);
-  const [codeInput, setCodeInput] = useState('# Write your solution here\n\ndef solution():\n    pass\n\n# Test your code\nif __name__ == "__main__":\n    result = solution()\n    print(result)');
+  const [codeInput, setCodeInput] = useState('def solution():\n    # Write your code here\n');
   const [language, setLanguage] = useState('python');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -36,6 +37,10 @@ const Battle = ({ user, refreshUser }) => {
   const [timeExpired, setTimeExpired] = useState(false);
   const [leaveNotification, setLeaveNotification] = useState(null);
   const lastLeaveTimestamp = useRef(null);
+  const [outputHeight, setOutputHeight] = useState(200);
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartY = useRef(0);
+  const resizeStartHeight = useRef(0);
 
   // Refresh user data when component mounts (for participants entering battle)
   useEffect(() => {
@@ -43,6 +48,42 @@ const Battle = ({ user, refreshUser }) => {
       refreshUser();
     }
   }, [refreshUser]);
+
+  // Handle window resize
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+      
+      const deltaY = resizeStartY.current - e.clientY;
+      const newHeight = Math.max(150, Math.min(600, resizeStartHeight.current + deltaY));
+      setOutputHeight(newHeight);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'ns-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
+  const handleResizeStart = (e) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeStartY.current = e.clientY;
+    resizeStartHeight.current = outputHeight;
+  };
 
   useEffect(() => {
     const fetchBattleQuestion = async () => {
@@ -131,7 +172,7 @@ const Battle = ({ user, refreshUser }) => {
           // Set boilerplate ONLY on initial load OR when question changes
           if (isInitialLoad || questionChanged) {
             console.log('Setting boilerplate for question ID:', room.questionId);
-            const boilerplate = generateBoilerplate(selectedQuestion);
+            const boilerplate = generateBoilerplate(selectedQuestion, language);
             setCodeInput(boilerplate);
             lastSetQuestionId.current = room.questionId; // Store in ref
             setPreviousQuestionId(room.questionId);
@@ -171,6 +212,12 @@ const Battle = ({ user, refreshUser }) => {
     setTestResult(null);
     
     try {
+      // Append test code to user's solution automatically
+      const testCode = generateTestCode(question, language);
+      const fullCode = codeInput + testCode;
+      
+      const langConfig = getLanguageConfig(language);
+      
       // Using Piston API for code execution
       const response = await fetch('https://emkc.org/api/v2/piston/execute', {
         method: 'POST',
@@ -178,12 +225,12 @@ const Battle = ({ user, refreshUser }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          language: 'python',
-          version: '3.10.0',
+          language: langConfig.id,
+          version: langConfig.version,
           files: [
             {
-              name: 'main.py',
-              content: codeInput
+              name: `main.${langConfig.extension}`,
+              content: fullCode
             }
           ],
           stdin: '',
@@ -282,6 +329,7 @@ const Battle = ({ user, refreshUser }) => {
 
       try {
         // Generate code with test case input
+        // Start with user's solution
         let testCode = codeInput;
         
         // Parse the input and create appropriate function call
@@ -301,20 +349,28 @@ const Battle = ({ user, refreshUser }) => {
           functionCall = `result = solution(${input})`;
         }
 
-        // Replace the test code in boilerplate
-        testCode = testCode.replace(
-          /if __name__ == "__main__":[\s\S]*/,
-          `if __name__ == "__main__":\n    ${functionCall}\n    print(result)`
-        );
+        // Append test code based on language
+        const langConfig = getLanguageConfig(language);
+        let testCodeAppend = '';
+        
+        if (language === 'python') {
+          testCodeAppend = `\n\nif __name__ == "__main__":\n    ${functionCall}\n    print(result)`;
+        } else if (language === 'cpp') {
+          testCodeAppend = `\nint main() {\n    ${functionCall};\n    cout << result << endl;\n    return 0;\n}\n`;
+        } else if (language === 'java') {
+          testCodeAppend = `\npublic class Main {\n    public static void main(String[] args) {\n        Solution solution = new Solution();\n        Object ${functionCall.replace('solution', 'result = solution.solution')};\n        System.out.println(result);\n    }\n}\n`;
+        }
+        
+        testCode += testCodeAppend;
 
         // Execute code
         const response = await fetch('https://emkc.org/api/v2/piston/execute', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            language: 'python',
-            version: '3.10.0',
-            files: [{ name: 'main.py', content: testCode }],
+            language: langConfig.id,
+            version: langConfig.version,
+            files: [{ name: `main.${langConfig.extension}`, content: testCode }],
             stdin: '',
             args: [],
             compile_timeout: 10000,
@@ -485,6 +541,21 @@ const Battle = ({ user, refreshUser }) => {
     }
   };
 
+  const handleLanguageChange = (newLanguage) => {
+    if (hasUserEditedCode.current) {
+      if (!window.confirm('Changing language will reset your code. Continue?')) {
+        return;
+      }
+    }
+    
+    setLanguage(newLanguage);
+    const boilerplate = generateBoilerplate(question, newLanguage);
+    setCodeInput(boilerplate);
+    setOutput('');
+    setTestResult(null);
+    hasUserEditedCode.current = false;
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -645,9 +716,20 @@ const Battle = ({ user, refreshUser }) => {
       <div className="editor-panel">
         <div className="editor-header">
           <div className="editor-controls">
-            <div className="language-info">
-              <span className="language-badge">🐍 Python 3.10</span>
-              <span className="status-text">Real-time execution enabled</span>
+            <div className="language-selector">
+              <label htmlFor="language-dropdown">Language:</label>
+              <select 
+                id="language-dropdown"
+                value={language}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                className="language-dropdown"
+              >
+                {getAvailableLanguages().map(lang => (
+                  <option key={lang.id} value={lang.id}>
+                    {lang.icon} {lang.displayName}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="progress-indicator">
               <span className="progress-label">Question</span>
@@ -671,10 +753,15 @@ const Battle = ({ user, refreshUser }) => {
               hasUserEditedCode.current = true;
             }}
             onKeyDown={handleKeyDown}
+            language={language}
           />
         </div>
 
-        <div className="output-section">
+        <div className="resize-handle" onMouseDown={handleResizeStart}>
+          <div className="resize-handle-line"></div>
+        </div>
+
+        <div className="output-section" style={{ height: `${outputHeight}px` }}>
           <div className="output-header">
             <div className="output-title-wrapper">
               <h4>Output</h4>

@@ -127,6 +127,18 @@ const Sidebar = ({ user, onLogout }) => {
                 </div>
               </div>
             </div>
+
+            <div className="profile-modal-footer">
+              <button 
+                className="show-stats-btn"
+                onClick={() => {
+                  setShowProfile(false);
+                  navigate('/stats');
+                }}
+              >
+                📊 Show Me My Stats
+              </button>
+            </div>
           </div>
         </div>
       )}

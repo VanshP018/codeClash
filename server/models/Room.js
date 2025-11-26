@@ -7,6 +7,11 @@ const roomSchema = new mongoose.Schema({
     unique: true,
     index: true
   },
+  mode: {
+    type: String,
+    enum: ['custom', 'ashes'],
+    default: 'custom'
+  },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

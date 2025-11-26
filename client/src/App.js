@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Room from './pages/Room';
 import Leaderboard from './pages/Leaderboard';
 import Battle from './pages/Battle';
+import Stats from './pages/Stats';
 import './App.css';
 
 function App() {
@@ -149,6 +150,16 @@ function App() {
           element={
             currentUser ? (
               <Battle user={currentUser} refreshUser={refreshUser} />
+            ) : (
+              <Navigate to="/" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/stats" 
+          element={
+            currentUser ? (
+              <Stats user={currentUser} onLogout={handleLogout} />
             ) : (
               <Navigate to="/" replace />
             )

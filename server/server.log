@@ -1,0 +1,8 @@
+
+> auth-server@1.0.0 start
+> node index.js
+
+(node:77609) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Server running on port 5001
+MongoDB Connected

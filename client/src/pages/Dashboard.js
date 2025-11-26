@@ -5,6 +5,8 @@ import './Dashboard.css';
 
 const Dashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
+  const [showCustomMode, setShowCustomMode] = useState(false);
+  const [showAshesMode, setShowAshesMode] = useState(false);
   const [showCreateRoom, setShowCreateRoom] = useState(false);
   const [showJoinRoom, setShowJoinRoom] = useState(false);
 
@@ -26,43 +28,293 @@ const Dashboard = ({ user, onLogout }) => {
           </div>
         </div>
 
-        <div className="room-buttons">
-          <button 
-            className="room-btn create-btn"
-            onClick={() => {
+        <div className="mode-selection">
+          <h2>Select Battle Mode</h2>
+          <div className="mode-buttons">
+            <button 
+              className="mode-btn custom-mode-btn"
+              onClick={() => setShowCustomMode(true)}
+            >
+              <div className="mode-icon">⚔️</div>
+              <div className="mode-info">
+                <h3>Custom Mode</h3>
+                <p>Create or join custom battles with friends</p>
+              </div>
+            </button>
+            <button 
+              className="mode-btn ashes-mode-btn"
+              onClick={() => setShowAshesMode(true)}
+            >
+              <div className="mode-icon">🔥</div>
+              <div className="mode-info">
+                <h3>Ashes Mode</h3>
+                <p>Compete in ranked matches for glory</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {showCustomMode && (
+          <CustomModeModal 
+            user={user}
+            onClose={() => setShowCustomMode(false)}
+            navigate={navigate}
+            onShowCreate={() => {
               setShowCreateRoom(true);
               setShowJoinRoom(false);
             }}
-          >
-            ➕ Create Room
-          </button>
-          <button 
-            className="room-btn join-btn"
-            onClick={() => {
+            onShowJoin={() => {
               setShowJoinRoom(true);
               setShowCreateRoom(false);
             }}
-          >
-            🚪 Join Room
-          </button>
-        </div>
-
-        {showCreateRoom && (
-          <CreateRoomModal 
-            user={user}
-            onClose={() => setShowCreateRoom(false)}
-            navigate={navigate}
+            showCreateRoom={showCreateRoom}
+            showJoinRoom={showJoinRoom}
+            setShowCreateRoom={setShowCreateRoom}
+            setShowJoinRoom={setShowJoinRoom}
           />
         )}
 
-        {showJoinRoom && (
-          <JoinRoomModal 
+        {showAshesMode && (
+          <AshesModeModal 
             user={user}
-            onClose={() => setShowJoinRoom(false)}
+            onClose={() => setShowAshesMode(false)}
             navigate={navigate}
           />
         )}
       </div>
+      </div>
+    </div>
+  );
+};
+
+const CustomModeModal = ({ user, onClose, navigate, onShowCreate, onShowJoin, showCreateRoom, showJoinRoom, setShowCreateRoom, setShowJoinRoom }) => {
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content mode-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>⚔️ Custom Mode</h2>
+          <button className="close-btn" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="modal-body">
+          <p className="mode-description">Create your own room or join an existing one to battle with friends!</p>
+          
+          <div className="room-buttons">
+            <button 
+              className="room-btn create-btn"
+              onClick={onShowCreate}
+            >
+              ➕ Create Room
+            </button>
+            <button 
+              className="room-btn join-btn"
+              onClick={onShowJoin}
+            >
+              🚪 Join Room
+            </button>
+          </div>
+
+          {showCreateRoom && (
+            <CreateRoomModal 
+              user={user}
+              onClose={() => setShowCreateRoom(false)}
+              navigate={navigate}
+            />
+          )}
+
+          {showJoinRoom && (
+            <JoinRoomModal 
+              user={user}
+              onClose={() => setShowJoinRoom(false)}
+              navigate={navigate}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AshesModeModal = ({ user, onClose, navigate }) => {
+  const [inQueue, setInQueue] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [queuePosition, setQueuePosition] = useState(null);
+  const [matchFound, setMatchFound] = useState(false);
+  const pollIntervalRef = React.useRef(null);
+
+  React.useEffect(() => {
+    return () => {
+      // Cleanup: leave queue if modal closes while in queue
+      if (inQueue && pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        leaveQueue();
+      }
+    };
+  }, [inQueue]);
+
+  const joinQueue = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please log in again');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('http://localhost:5001/api/matchmaking/queue/join', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        if (data.matched) {
+          // Immediate match found
+          setMatchFound(true);
+          setTimeout(() => {
+            navigate(`/battle/${data.roomCode}`);
+          }, 2000);
+        } else {
+          // Added to queue, start polling
+          setInQueue(true);
+          setQueuePosition(data.queuePosition);
+          startPolling();
+        }
+      } else {
+        setError(data.message || 'Failed to join queue');
+      }
+    } catch (err) {
+      setError('Error joining queue: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const leaveQueue = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      await fetch('http://localhost:5001/api/matchmaking/queue/leave', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setInQueue(false);
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    } catch (err) {
+      console.error('Error leaving queue:', err);
+    }
+  };
+
+  const startPolling = () => {
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          clearInterval(pollIntervalRef.current);
+          return;
+        }
+
+        const response = await fetch('http://localhost:5001/api/matchmaking/queue/status', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          if (data.status === 'matched') {
+            // Match found!
+            clearInterval(pollIntervalRef.current);
+            setMatchFound(true);
+            setTimeout(() => {
+              navigate(`/battle/${data.roomCode}`);
+            }, 2000);
+          } else {
+            // Update queue position
+            setQueuePosition(data.queuePosition);
+          }
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
+    }, 2000); // Poll every 2 seconds
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content mode-modal ashes-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>🔥 Ashes Mode</h2>
+          <button className="close-btn" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="modal-body">
+          {error && <div className="error-message">{error}</div>}
+          
+          {!inQueue && !matchFound && (
+            <>
+              <p className="mode-description">
+                Enter the ranked queue and get matched with players of similar skill level!
+              </p>
+              <div className="ashes-info">
+                <p>🎯 Rating Range: ±200</p>
+                <p>⚡ Fast Matchmaking</p>
+                <p>🏆 Competitive Battles</p>
+              </div>
+              <button 
+                className="queue-btn join-queue-btn"
+                onClick={joinQueue}
+                disabled={loading}
+              >
+                {loading ? 'Joining Queue...' : '🔥 Join Queue'}
+              </button>
+            </>
+          )}
+
+          {inQueue && !matchFound && (
+            <div className="queue-status">
+              <div className="queue-animation">
+                <div className="spinner"></div>
+              </div>
+              <h3>Searching for Opponent...</h3>
+              <p className="queue-position">Position in queue: #{queuePosition}</p>
+              <p className="queue-message">Looking for players with rating {user.rating - 200} - {user.rating + 200}</p>
+              <button 
+                className="queue-btn leave-queue-btn"
+                onClick={leaveQueue}
+              >
+                Leave Queue
+              </button>
+            </div>
+          )}
+
+          {matchFound && (
+            <div className="match-found">
+              <div className="match-animation">
+                <div className="checkmark">✓</div>
+              </div>
+              <h3>Match Found!</h3>
+              <p>Preparing battle arena...</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
